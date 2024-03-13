@@ -131,7 +131,7 @@ commutation relations globally.
     the Jordan-Wigner string built by the local operator ``JW`` on sites ``l < j`` *and* the local operators ``'Cu', 'Cdu', 'Cd', 'Cdd'`` on site ``j``.
 
 Written explicitly in terms of onsite operators defined in the :class:`~tenpy.networks.sites.FermionSite`,
-with the `j`-th entry entry in the list acting on site `j`, the relations are::
+with the `j`-th entry in the list acting on site `j`, the relations are::
 
     ["JW", ..., "JW", "Cu",  "Id", ..., "Id"]    # for the annihilation operator spin-up
     ["JW", ..., "JW", "Cd",  "Id", ..., "Id"]    # for the annihilation operator spin-down
