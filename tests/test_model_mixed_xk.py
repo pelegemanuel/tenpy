@@ -1,12 +1,14 @@
 # Copyright (C) TeNPy Developers, GNU GPLv3
-from tenpy.models.mixed_xk import SpinlessMixedXKSquare, HubbardMixedXKSquare
+
+import numpy as np
+import pytest
 from test_model import check_general_model
+
+from tenpy.algorithms import dmrg
 from tenpy.models.fermions_spinless import FermionModel
 from tenpy.models.hubbard import FermiHubbardModel
+from tenpy.models.mixed_xk import HubbardMixedXKSquare, SpinlessMixedXKSquare
 from tenpy.networks.mps import MPS
-from tenpy.algorithms import dmrg
-import pytest
-import numpy as np
 
 
 @pytest.mark.parametrize('model_class', [SpinlessMixedXKSquare, HubbardMixedXKSquare])
@@ -14,13 +16,15 @@ def test_MixedXKModel_general(model_class):
     check_general_model(model_class, dict(Lx=2, Ly=3, bc_MPS='infinite'))
 
 
-def test_mixed_spinless():
+@pytest.mark.parametrize("chimax", [100, 300, 500])
+@pytest.mark.parametrize("Lx", [2, 3, 4])
+@pytest.mark.parametrize("conserve_k", [True, False])
+def test_mixed_spinless(Lx:  int, chimax: int, conserve_k: bool):
     """
     compare a small system of spinless fermions in real and mixed space
     """
-    Lx, Ly = 2, 4
+    Ly = 4
     J, V = 1., 10
-    chimax = 100
     #real space
     model_params = dict(J=J,
                         V=V,
@@ -41,8 +45,7 @@ def test_mixed_spinless():
             'svd_min': 1.e-10
         },
     }
-    product_state = [[['full'], ['empty'], ['full'], ['empty']],
-                     [['full'], ['empty'], ['full'], ['empty']]]  # half filling
+    product_state = [[['full'], ['empty'], ['full'], ['empty']] for _ in range(Lx)]
     psi = MPS.from_lat_product_state(M.lat, product_state)
     info = dmrg.run(psi, M, dmrg_params)
     E_real = info['E']
@@ -52,11 +55,11 @@ def test_mixed_spinless():
     CdC_real = M.lat.mps2lat_values(psi.correlation_function('Cd', 'C')[0, :])
 
     #mixed space
-    model_params = dict(t=J, V=V, Lx=Lx, Ly=Ly, bc_MPS='finite', conserve_k=True)
+    model_params = dict(t=J, V=V, Lx=Lx, Ly=Ly, bc_MPS='finite', conserve_k=conserve_k)
     M = SpinlessMixedXKSquare(model_params)
 
     #initial product state with momentum 0
-    product_xk = [['full', 'empty', 'full', 'empty'], ['full', 'empty', 'full', 'empty']]
+    product_xk = [['full', 'empty', 'full', 'empty'] for _ in range(Lx)]
     psi_xk = MPS.from_lat_product_state(M.lat, product_xk)
     info = dmrg.run(psi_xk, M, dmrg_params)  # the main work...
     E_mixed = info['E']
